@@ -103,12 +103,12 @@ namespace VisualDebugger
 		hud.AddLine(HELP, "    F7 - render mode");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, " Camera");
-		hud.AddLine(HELP, "    W,S,A,D,Q,Z - forward,backward,left,right,up,down");
+		hud.AddLine(HELP, "    W,S,A,D,Q,Z - forward, backward, left, right, up, down");
 		hud.AddLine(HELP, "    mouse + click - change orientation");
 		hud.AddLine(HELP, "    F8 - reset view");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, " Force (applied to the selected actor)");
-		hud.AddLine(HELP, "    I,K,J,L,U,M - forward,backward,left,right,up,down");
+		hud.AddLine(HELP, "    I, K, J, L, U, M - forward, backward, left, right, up, down");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, " Ball Type");
 		hud.AddLine(HELP, "    1, 2, 3 - (Change Ball type)");
@@ -117,7 +117,7 @@ namespace VisualDebugger
 		hud.AddLine(HELP, "    7, 8 - (Change Club type)");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, " Club Movement");
-		hud.AddLine(HELP, "    W, S, A, D, E, C - (Forward, Backwards, Left, Right, Up, Down)");
+		hud.AddLine(HELP, "    T, G, F, H, E, C - (Forward, Backwards, Left, Right, Up, Down)");
 		hud.AddLine(HELP, "");
 		hud.AddLine(HELP, " Club Swing");
 		hud.AddLine(HELP, "    B, N, M - (Swing Back, Fire, Set Swing Speed)");
@@ -199,13 +199,13 @@ namespace VisualDebugger
 			scene->ChangeToWedgeBall();
 			break;
 		case 'R':
-			scene->RotatePutterLeft();
+			scene->RotateLeft();
 			break;
 		case 'Y':
-			scene->RotatePutterRight();
+			scene->RotateRight();
 			break;
 		case 'V':
-			scene->ResetRotation();
+			scene->RotationReset();
 			break;
 		default:
 			break;
@@ -217,7 +217,7 @@ namespace VisualDebugger
 		switch (toupper(key))
 		{
 		case 'N':
-			scene->Fire();
+			scene->SwingClub();
 			scene->Score();
 			break;
 		default:
@@ -230,27 +230,27 @@ namespace VisualDebugger
 		switch (toupper(key))
 		{
 		case 'T':
-			scene->MovePutterForward();
+			scene->PutterForward();
 			break;
 		case 'G':
-			scene->MovePutterBack();
+			scene->PutterBack();
 			break;
 		case 'F':
-			scene->MovePutterLeft();
+			scene->PutterLeft();
 			break;
 		case 'H':
-			scene->MovePutterRight();
+			scene->PutterRight();
 			break;
 		case 'E':
-			scene->MovePutterUp();
+			scene->PutterUp();
 			break;
 		case 'C':
-			scene->MovePutterDown();
+			scene->PutterDown();
 			break;
 		case 'B':
 			scene->SwingBack();
 		case 'N':
-			scene->SetSpeed();
+			scene->SetClubSpeed();
 			break;
 		default:
 			break;

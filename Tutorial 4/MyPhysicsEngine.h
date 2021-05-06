@@ -8,7 +8,7 @@ namespace PhysicsEngine
 {
 	using namespace std;
 
-	//a list of colours: Circus Palette
+	// a list of colours: Circus Palette
 	static const PxVec3 color_palette[] = 
 	{
 		PxVec3(46.f/255.f,9.f/255.f,39.f/255.f),
@@ -27,7 +27,6 @@ namespace PhysicsEngine
 			ACTOR2		= (1 << 2),
 			GOLFBALL    = (1 << 3),
 			PUTTER      = (1 << 4)
-			//add more if you need
 		};
 	};
 
@@ -120,10 +119,6 @@ namespace PhysicsEngine
 		pairFlags = PxPairFlag::eCONTACT_DEFAULT;
 		//enable continous collision detection
 		//pairFlags |= PxPairFlag::eCCD_LINEAR;
-		
-		
-		//customise collision filtering here
-		//e.g.
 
 		// trigger the contact callback for pairs (A,B) where 
 		// the filtermask of A contains the ID of B and vice versa.
@@ -168,9 +163,6 @@ namespace PhysicsEngine
 	static PxVec3 wedge_verts[] = { PxVec3(0,1,0), PxVec3(1,0,0), PxVec3(-1,0,0), PxVec3(0,0,1), PxVec3(0,0,-1),
 									PxVec3(0,-1,0), PxVec3(-1,0,0), PxVec3(1,0,0), PxVec3(0,0,-1), PxVec3(0,0,1),
 									PxVec3(1,1,1), PxVec3(1,1,0), PxVec3(0,0,0), PxVec3(0,1,1), PxVec3(0,0,-1) };
-	// wedge triangles: a list of three vertices for each triangle e.g. the first triangle consists of vertices 1, 4 and 0
-	// vertices have to be specified in a counter-clockwise order to assure the correct shading in rendering
-	//static PxU32 wedge_trigs[] = { 1, 4, 0, 3, 1, 0, 2, 3, 0, 4, 2, 0, 3, 2, 1, 2, 4, 1 };
 
 	// wedge ball class.
 	class Wedge : public ConvexMesh
@@ -217,11 +209,21 @@ namespace PhysicsEngine
 	public:
 		BasicPutter(const PxTransform& pose = PxTransform(PxIdentity), PxReal density = 1.f, PxVec3 secondShape = PxVec3()) : DynamicActor(pose)
 		{
-			CreateShape(PxBoxGeometry(PxVec3(0.5f, .08f, .05f)), density);		// should change these to make the putter bigger.
+			// create putter shapes and set local pose.
+			CreateShape(PxBoxGeometry(PxVec3(.7f, .1f, .05f)), density);
 			CreateShape(PxBoxGeometry(PxVec3(.05f, 2.f, .05f)), density);
 			CreateShape(PxBoxGeometry(PxVec3(.08f, .5f, .08f)), density);
 			GetShape(1)->setLocalPose(PxTransform(PxVec3(.2f, 2.f, .0f)));
 			GetShape(2)->setLocalPose(PxTransform(PxVec3(.2f, 3.5f, .0f)));
+		}
+	};
+
+	// basic putter shape object class.
+	class ClubPutter : public DynamicActor
+	{
+	public:
+		ClubPutter(const PxTransform& pose = PxTransform(PxIdentity), PxReal density = 1.f, PxVec3 secondShape = PxVec3()) : DynamicActor(pose)
+		{
 		}
 	};
 
@@ -245,36 +247,39 @@ namespace PhysicsEngine
 			wallMaterial->setRestitution(0.9f);							// set bounciness.
 
 
-			PxReal thickness = 1.f;
-			trackPosition = trackPos;
-			PxVec3* Dimensions = dimensions;
-			PxQuat Rotation;
-			Rotation = PxQuat(1.0f, rotation);
+			PxReal wallThickness = 1.f;			// wall thickness.
+			trackPosition = trackPos;			// track position from function call.
+			PxVec3* Dimensions = dimensions;	// track floor dimensions from function call.
+			PxQuat Rotation;					// track rotation
+			Rotation = PxQuat(1.0f, rotation);	
 
 			// instantiate objects.
-			trackStraight = new DynamicActor(PxTransform(trackPosition.x, thickness, trackPosition.z));
-			trackWalls = new DynamicActor(PxTransform(trackPosition.x, thickness, trackPosition.z));
+			trackStraight = new DynamicActor(PxTransform(trackPosition.x, wallThickness, trackPosition.z));
+			trackWalls = new DynamicActor(PxTransform(trackPosition.x, wallThickness, trackPosition.z));
 
 			// track straight.
-			trackStraight->CreateShape(PxBoxGeometry(Dimensions->x, thickness, Dimensions->z), 1.0f);
+			trackStraight->CreateShape(PxBoxGeometry(Dimensions->x, wallThickness, Dimensions->z), 1.0f);
 
 			// track walls.
-			trackWalls->CreateShape(PxBoxGeometry(Dimensions->x / 6, thickness * 1.25, Dimensions->z), 1.0f);
-			trackWalls->CreateShape(PxBoxGeometry(Dimensions->x / 6, thickness * 1.25, Dimensions->z), 1.0f);
+			trackWalls->CreateShape(PxBoxGeometry(Dimensions->x / 6, wallThickness * 1.25, Dimensions->z), 1.0f);
+			trackWalls->CreateShape(PxBoxGeometry(Dimensions->x / 6, wallThickness * 1.25, Dimensions->z), 1.0f);
 		
 			// position walls at the side of the track.
-			trackWalls->GetShape(0)->setLocalPose(PxTransform(trackPosition.x - Dimensions->x / 1, thickness, 0.0f));
-			trackWalls->GetShape(1)->setLocalPose(PxTransform(trackPosition.x + Dimensions->x / 1, thickness, 0.0f));
+			trackWalls->GetShape(0)->setLocalPose(PxTransform(trackPosition.x - Dimensions->x / 1, wallThickness, 0.0f));
+			trackWalls->GetShape(1)->setLocalPose(PxTransform(trackPosition.x + Dimensions->x / 1, wallThickness, 0.0f));
 
+			// set track straight to non-movable, set material and colour.
 			trackStraight->SetKinematic(true);
 			trackStraight->Material(trackMat);
 			trackStraight->Color(color_palette[0]);
 
+			// set track walls to non-movable, set material and colour.
 			trackWalls->SetKinematic(true);
 			trackWalls->Material(wallMaterial);
 			trackWalls->Color(color_palette[4]);
 		}
 
+		// add objects to scene.
 		void AddToScene(Scene* scene)
 		{
 			scene->Add(trackStraight);
@@ -284,16 +289,19 @@ namespace PhysicsEngine
 
 	class TrackCorner
 	{
+		// track corner materials
 		PxMaterial* trackMat;
 		PxMaterial* wallMat;
 
 	public:
+		// declare track corner objects.
 		DynamicActor* trackStraight;
 		PxVec3 trackPosition;
 		DynamicActor* trackCornerWall;
 
 		TrackCorner(PxVec3* dimensions, PxVec3 trackPos, PxQuat(wallRotation), PxReal density = 1.f)
 		{
+			// create track corner materials.
 			trackMat = CreateMaterial(0.7f, 1.9f, 0.01f);
 			wallMat = CreateMaterial(0.7f, 1.9f, 0.01f);
 			wallMat->setRestitution(1.f);
@@ -304,26 +312,31 @@ namespace PhysicsEngine
 			PxQuat wall_rotation = wallRotation;
 			trackPosition = trackPos;
 
+			// instantiate track corner objects.
 			trackStraight = new DynamicActor(PxTransform(trackPosition.x, thickness, trackPosition.z));
 			trackCornerWall = new DynamicActor(PxTransform(trackPosition.x, thickness, trackPosition.z));
 
+			// sort out track straight objects.
 			trackStraight->CreateShape(PxBoxGeometry(Dimensions->x, thickness, Dimensions->z), 1.0f);
 			trackStraight->Color(color_palette[0]);
 			trackStraight->SetKinematic(true);
 
+			// sort out track corner objects.
 			trackCornerWall->CreateShape(PxBoxGeometry(Dimensions->x / 6, thickness * 1.25, Dimensions->z), 1.0f);
 			trackCornerWall->CreateShape(PxBoxGeometry(Dimensions->x, thickness * 1.25, Dimensions->z / 6), 1.0f);
 			trackCornerWall->CreateShape(PxBoxGeometry(Dimensions->x / 8, thickness * 1.25, Dimensions->z / 2), 1.0f);
 
+			// set local pose of track walls.
 			trackCornerWall->GetShape(0)->setLocalPose(PxTransform(trackPosition.x - Dimensions->x / 1, thickness, 0.0f, wall_rotation));
 			trackCornerWall->GetShape(1)->setLocalPose(PxTransform(trackPosition.x, thickness, -Dimensions->z, wall_rotation));
 			trackCornerWall->GetShape(2)->setLocalPose(PxTransform(trackPosition.x - Dimensions->x / 1.5, thickness, -Dimensions->z / 1.5, cornerRotation * wall_rotation));
 
-
+			// set walls to non-movable and set colour.
 			trackCornerWall->SetKinematic(true);
 			trackCornerWall->Color(color_palette[4]);
 		}
 
+		// add objects to scene.
 		void AddtoScene(Scene* scene)
 		{
 			scene->Add(trackStraight);
@@ -431,7 +444,7 @@ namespace PhysicsEngine
 	// bounce pad object class.
 	class BouncePad
 	{
-		vector<DistanceJoint*> springs;
+		vector<DistanceJoint*> trampolineSprings;
 		Box* bottom, * top;
 		PxMaterial* bouncePadMat;
 
@@ -447,23 +460,23 @@ namespace PhysicsEngine
 			bottom = new Box(PxTransform(PxVec3(BouncePosition.x, thickness, BouncePosition.z)), PxVec3(Dimensions->x, thickness, Dimensions->z));
 			top = new Box(PxTransform(PxVec3(BouncePosition.x, Dimensions->y + thickness / 2, BouncePosition.z)), PxVec3(Dimensions->x - 0.1f, thickness, Dimensions->z - 0.1f));
 			top->Material(bouncePadMat);
-			top->Color(color_palette[0]);
+			top->Color(color_palette[4]);
 			top->Name("Tramp_top");
 
 			// create springs.
-			springs.resize(4);
-			springs[0] = new DistanceJoint(bottom, PxTransform(PxVec3(Dimensions->x, thickness, Dimensions->z)), top, PxTransform(PxVec3(Dimensions->x, -Dimensions->y / 2, Dimensions->z)));
-			springs[1] = new DistanceJoint(bottom, PxTransform(PxVec3(Dimensions->x, thickness, -Dimensions->z)), top, PxTransform(PxVec3(Dimensions->x, -Dimensions->y / 2, -Dimensions->z)));
-			springs[2] = new DistanceJoint(bottom, PxTransform(PxVec3(-Dimensions->x, thickness, Dimensions->z)), top, PxTransform(PxVec3(-Dimensions->x, -Dimensions->y / 2, Dimensions->z)));
-			springs[3] = new DistanceJoint(bottom, PxTransform(PxVec3(-Dimensions->x, thickness, -Dimensions->z)), top, PxTransform(PxVec3(-Dimensions->x, -Dimensions->y / 2, -Dimensions->z)));
-			for (unsigned int i = 0; i < springs.size(); i++)
+			trampolineSprings.resize(4);
+			trampolineSprings[0] = new DistanceJoint(bottom, PxTransform(PxVec3(Dimensions->x, thickness, Dimensions->z)), top, PxTransform(PxVec3(Dimensions->x, -Dimensions->y / 2, Dimensions->z)));
+			trampolineSprings[1] = new DistanceJoint(bottom, PxTransform(PxVec3(Dimensions->x, thickness, -Dimensions->z)), top, PxTransform(PxVec3(Dimensions->x, -Dimensions->y / 2, -Dimensions->z)));
+			trampolineSprings[2] = new DistanceJoint(bottom, PxTransform(PxVec3(-Dimensions->x, thickness, Dimensions->z)), top, PxTransform(PxVec3(-Dimensions->x, -Dimensions->y / 2, Dimensions->z)));
+			trampolineSprings[3] = new DistanceJoint(bottom, PxTransform(PxVec3(-Dimensions->x, thickness, -Dimensions->z)), top, PxTransform(PxVec3(-Dimensions->x, -Dimensions->y / 2, -Dimensions->z)));
+			
+			// set the stifness and damping of each spring.
+			for (unsigned int i = 0; i < trampolineSprings.size(); i++)
 			{
-				// set min distance of springs?
-				springs[i]->Stiffness(stiffness);
-				springs[i]->Damping(damping);
+				trampolineSprings[i]->Stiffness(stiffness);
+				trampolineSprings[i]->Damping(damping);
 			}
 
-			
 			bottom->SetKinematic(true);
 		}
 
@@ -475,23 +488,27 @@ namespace PhysicsEngine
 
 		~BouncePad()
 		{
-			for (unsigned int i = 0; i < springs.size(); i++)
-				delete springs[i];
+			for (unsigned int i = 0; i < trampolineSprings.size(); i++)
+				delete trampolineSprings[i];
 		}
 	};
 
 	// Scene Class Object.
 	class MyScene : public Scene
 	{
+		// basic objects.
 		Plane* plane;
 		Cloth* cloth;
 		Box* box;
 		
+		// callbacks.
 		MySimulationEventCallback* my_callback;
+		
+		// object for cycling actors.
 		DynamicActor* currentActor;
 
 		// club swing speed.
-		PxReal speed = 0;
+		PxReal clubSpeed = 0;
 
 		// triggers.
 		bool swingBack = false;
@@ -499,9 +516,9 @@ namespace PhysicsEngine
 	public:
 		// putter
 		BasicPutter* putter;
-		RevoluteJoint* pJoint;
-		PxTransform pJointLocation;
-		Box* putterJoint;
+		RevoluteJoint* putterJoint;
+		PxTransform putterJointBoxLocation;
+		Box* putterJointBox;
 
 		// balls
 		Sphere* golfBall;
@@ -534,8 +551,7 @@ namespace PhysicsEngine
 		// Score.
 		int totalNumberSwings = 0;
 
-		//specify your custom filter shader here
-		//PxDefaultSimulationFilterShader by default
+		// scene contructor, custom filter shading.
 		MyScene() : Scene(CustomFilterShader) {};
 
 		
@@ -568,19 +584,13 @@ namespace PhysicsEngine
 			px_scene->setSimulationEventCallback(my_callback);
 
 			GameStartObjects();
-
-			//setting custom cloth parameters	- not sure what any of this does.
-			//((PxCloth*)cloth->Get())->setStretchConfig(PxClothFabricPhaseType::eBENDING, PxClothStretchConfig(1.f));
 		}
 
 		//Custom udpate function
 		virtual void CustomUpdate() 
 		{
-			pJointLocation = ((PxRigidBody*)putterJoint->Get())->getGlobalPose();
-
-			// Display speed
-			//cerr << speed << endl;
-
+			// get local pose of the putter joint box location every update.
+			putterJointBoxLocation = ((PxRigidBody*)putterJointBox->Get())->getGlobalPose();
 			((PxRigidDynamic*)putter->Get())->wakeUp();
 
 			// when the ball enters the hole trigger box, display to the user.
@@ -588,12 +598,6 @@ namespace PhysicsEngine
 			{
 				cerr << "You've Won!" << endl;
 			}
-		}
-
-		/// An example use of key release handling
-		void ExampleKeyReleaseHandler()
-		{
-			cerr << "I am realeased!" << endl;
 		}
 
 		/// An example use of key presse handling
@@ -608,7 +612,7 @@ namespace PhysicsEngine
 			}
 			else
 			{
-				;
+				;	// do nothing.
 			}
 		}
 
@@ -654,36 +658,34 @@ namespace PhysicsEngine
 			plane->Name("BOUNDS");
 			Add(plane);
 
-			// putter joint object.
-			putterJoint = new Box(PxTransform(PxVec3(0.f, 11.25f, 5.0f)));
-			putterJoint->SetKinematic(true);
-			Add(putterJoint);
+			// putter joint box.
+			putterJointBox = new Box(PxTransform(PxVec3(0.f, 11.25f, 5.0f)));
+			putterJointBox->SetKinematic(true);
+			Add(putterJointBox);
 
 			// putter object.
 			putter = new BasicPutter(PxTransform(PxVec3(.1f, 5.f, .0f)));
-			putter->Color(color_palette[2]);
+			putter->Color(color_palette[0]);
 			putter->Name("PUTTER");
 			((PxRigidBody*)putter->Get())->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
-			putter->SetupFiltering(FilterGroup::PUTTER, FilterGroup::GOLFBALL);
-			((PxRigidBody*)putter->Get())->setMass(0.355f);
+			((PxRigidBody*)putter->Get())->setMass(0.25f); 
 			Add(putter);
 
 			// putter joint.
-			pJoint = new RevoluteJoint(putterJoint, PxTransform(PxVec3(0.f, -4.f, 0.f), PxQuat(PxPi / 2, PxVec3(1.0f, 0.0f, 0.f))), putter, PxTransform(PxVec3(0.f, 5.f, 0.f)));
-			pJoint->SetLimits(-PxPi / 1.4f, -PxPi / 3.5f);
+			putterJoint = new RevoluteJoint(putterJointBox, PxTransform(PxVec3(0.f, -4.f, 0.f), PxQuat(PxPi / 2, PxVec3(1.0f, 0.0f, 0.f))), putter, PxTransform(PxVec3(0.f, 5.f, 0.f)));
+			putterJoint->SetLimits(-PxPi / 1.4f, -PxPi / 3.5f);
 
 			// instantiate new golf ball object.
-			// i dont know why this works but it does.
-			golfBall = new Sphere(PxTransform(0.0f, 15.0f, 0.0f), 0.5f, 1.0f);
+			golfBall = new Sphere(PxTransform(0.0f, 7.5f, -5.0f), 0.5f, 0.5f);
 			golfBall->Name("golfBall");
-			((PxRigidBody*)golfBall->Get())->setMass(0.045f);
+			((PxRigidBody*)golfBall->Get())->setMass(0.5f);
 			((PxRigidBody*)golfBall->Get())->setRigidBodyFlag(PxRigidBodyFlag::eENABLE_CCD, true);
 			((PxRigidDynamic*)golfBall->Get())->setLinearDamping(.25f);								
 			Add(golfBall);
 			currentActor = golfBall;
 
 			// straight track piece 1. (track dimensions, track position, track rotation, 1.0f)
-			Track1 = new Track(new PxVec3(10.0f, 3.0f, 30.0f), PxVec3(0.0f, -10.0f, -0.0f), PxVec3(0.0f, 1.0f, 0.0f), 1.0f);
+			Track1 = new Track(new PxVec3(10.0f, 3.0f, 30.0f), PxVec3(0.0f, 10.0f, 0.0f), PxVec3(0.0f, 1.0f, 0.0f), 1.0f);
 			Track1->trackWalls->GetShape(1)->setLocalPose(PxTransform(PxVec3(10.0f, 1.0f, 0.0f)));
 			Track1->AddToScene(this);
 
@@ -730,108 +732,108 @@ namespace PhysicsEngine
 			Track5->trackWalls->GetShape(1)->setLocalPose(PxTransform(PxVec3(-10.0f, 1.0f, 0.0f)));
 			Track5->AddToScene(this);
 
-			// create box
-			//trampolineBox = new Box(PxTransform(PxVec3(58.0f, -2.0f, -211.5f)), PxVec3(12.5f, 4.0f, 12.5f));
-			//trampolineBox->SetKinematic(true);
-			//Add(trampolineBox);
-
-			// create a trampoline. -211.5f
+			// create a trampoline.
 			trampoline = new BouncePad(new PxVec3(13.0f, 13.0f, 13.0f), PxVec3(58.0f, 0.0f, -211.5), 70.0f, 1.0f);
 			trampoline->AddToScene(this);
 
-			// track sinkhole (58.0, -10.0, -240).
-			Track_End = new Hole(new PxVec3(10.0f, 3.0f, 10.0f), PxVec3(58.0f, -10.0f, -240.0f), PxVec3(0.0f, 1.0f, 0.0f), 10.0f);
+			// track end.
+			Track_End = new Hole(new PxVec3(10.0f, 3.0f, 10.0f), PxVec3(58.0f, -10.0f, -235.0f), PxVec3(0.0f, 1.0f, 0.0f), 10.0f);
 			Track_End->AddtoScene(this);
 
-			// create flag. - original position (58.0f, 10.0f, -20.0f).
-			flag = new Flag(new PxVec3(58.0f, 12.0f, -239.5f));
+			// create flag.
+			flag = new Flag(new PxVec3(58.0f, 12.0f, -234.5f));
 			flag->AddtoScene(this);
 
 			// hole trigger.
-			holeTrigger = new StaticBox(PxTransform(PxVec3(57.9f, 0.0f, -239.5f)), PxVec3(1.0f, .1f, 1.0f));
+			holeTrigger = new StaticBox(PxTransform(PxVec3(57.9f, 0.0f, -234.5f)), PxVec3(1.0f, .1f, 1.0f));
 			holeTrigger->SetTrigger(true);
 			holeTrigger->Name("holeTrigger");
 			Add(holeTrigger);
 
 		}
 
-		void SetSpeed()
+		// function to set club swing speed.
+		void SetClubSpeed()
 		{
-			if (speed <= 20.f)
+			if (clubSpeed <= 25.0f)
 			{
-				speed++;
+				clubSpeed++;
 			}
 			else
 			{
-				speed = 5;
+				clubSpeed = 5;
 			}
 		}
 
-		void Fire()
+		// function to phsyically swing club.
+		void SwingClub()
 		{
 			swingBack = false;
-			((PxRigidBody*)putter->Get())->addForce(PxVec3(.0f, .0f, -speed), PxForceMode::eIMPULSE);
+			((PxRigidBody*)putter->Get())->addForce(PxVec3(.0f, .0f, -clubSpeed), PxForceMode::eIMPULSE);
 		}
 
+		// function to pull club backwards ready for swing.
 		void SwingBack()
 		{
 			((PxRigidBody*)putter->Get())->addForce(PxVec3(.0f, .0f, 1.f), PxForceMode::eIMPULSE);
 			swingBack = true;
-			speed = 0;
+			clubSpeed = 0;
 		}
 
+		// function to increment score counter.
 		void Score()
 		{
 			cout << " Number of Swings: " << totalNumberSwings << "\n";
 			totalNumberSwings++;
 		}
 
-		
-
-		// want to clean all this up.
-		void MovePutterForward() const
+		// putter movement functions. 
+		void PutterForward() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y, pJointLocation.p.z - .05f), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			// move the putter joint box to move the whole object.
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z - .05f), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void MovePutterBack() const
+		void PutterBack() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y, pJointLocation.p.z + .05f), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z + .05f), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void MovePutterLeft() const
+		void PutterLeft() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x - .05f, pJointLocation.p.y, pJointLocation.p.z), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x - .05f, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void MovePutterRight() const
+		void PutterRight() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x + .05f, pJointLocation.p.y, pJointLocation.p.z), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x + .05f, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void MovePutterUp() const
+		void PutterUp() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y + .005f, pJointLocation.p.z), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y + .05f, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void MovePutterDown() const
+		void PutterDown() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y - .005f, pJointLocation.p.z), PxQuat(pJointLocation.q.x, pJointLocation.q.y, pJointLocation.q.z, pJointLocation.q.w)));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y - .05f, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.x, putterJointBoxLocation.q.y, putterJointBoxLocation.q.z, putterJointBoxLocation.q.w)));
 		}
 
-		void RotatePutterLeft() const
+		void RotateLeft() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y, pJointLocation.p.z), PxQuat(pJointLocation.q.y + .45f, PxVec3(0.f, 1.f, .0f))));
+			// rotate 45 degress to the left in the x-axis.
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.y + .45f, PxVec3(0.f, 1.f, .0f))));
 		}
 
-		void RotatePutterRight() const
+		void RotateRight() const
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y, pJointLocation.p.z), PxQuat(pJointLocation.q.y + -.45f, PxVec3(0.f, 1.f, .0f))));
+			// rotate 45 degress to the right in the x-axis. 
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z), PxQuat(putterJointBoxLocation.q.y + -.45f, PxVec3(0.f, 1.f, .0f))));
 		}
 
-		void ResetRotation()
+		void RotationReset()
 		{
-			((PxRigidBody*)putterJoint->Get())->setGlobalPose(PxTransform(PxVec3(pJointLocation.p.x, pJointLocation.p.y, pJointLocation.p.z), PxQuat(0.f, PxVec3(0.f, 1.f, .0f))));
+			((PxRigidBody*)putterJointBox->Get())->setGlobalPose(PxTransform(PxVec3(putterJointBoxLocation.p.x, putterJointBoxLocation.p.y, putterJointBoxLocation.p.z), PxQuat(0.f, PxVec3(0.f, 1.f, .0f))));
 		}
 	};
 }
